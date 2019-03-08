@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "memory": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "iosfwd": "cpp",
+        "iterator": "cpp",
+        "vector": "cpp",
+        "iostream": "cpp"
     }
 }

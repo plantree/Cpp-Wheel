@@ -10,6 +10,11 @@
 
 using namespace std;
 
+// util
+int min(int x, int y) {
+    return x < y ? x : y;
+}
+
 class BigNumber {
     friend BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs);
     friend vector<int> basicAdd(const BigNumber &lhs, const BigNumber &rhs);
@@ -26,6 +31,7 @@ public:
     BigNumber();
     BigNumber(long int x);
     BigNumber(string s);
+    BigNumber(vector<int> data);
     // 拷贝函数
     BigNumber(const BigNumber &n);
     BigNumber &operator=(const BigNumber &n);
@@ -90,6 +96,8 @@ BigNumber::BigNumber(string s) : pvec(make_shared<vector<int>>()) {
         pvec->push_back(s[0]-'0');
     }
 }
+
+BigNumber::BigNumber(vector<int> data) : pvec(make_shared<vector<int>>(data)) {}
 
 // 拷贝函数
 BigNumber::BigNumber(const BigNumber &n) : pvec(n.pvec), isNegative(n.isNegative) {
@@ -235,6 +243,7 @@ vector<int> basicMinus(const BigNumber &l, const BigNumber &r, bool &isNegative)
         i = 0;
     int len1 = lhs.pvec->size(),
         len2 = rhs.pvec->size();
+    /*
     while (i < len1 || i < len2) {
         if (i < len1 && i < len2) {
             minus = (*lhs.pvec)[i] - (*rhs.pvec)[i] - carry;
@@ -252,6 +261,30 @@ vector<int> basicMinus(const BigNumber &l, const BigNumber &r, bool &isNegative)
         }
         res.push_back(minus);
         minus = 0;
+        ++i;
+    }*/
+    while (i < len2) {
+        minus = (*lhs.pvec)[i] - (*rhs.pvec)[i] - carry;
+        if (minus < 0) {
+            minus += 10;
+            carry = 1;
+        } else {
+            carry = 0;
+        }
+        res.push_back(minus);
+        ++i;
+    }
+    while (i < len1) {
+        minus = (*lhs.pvec)[i] - carry;
+        if (minus < 0) {
+            minus += 10;
+            carry = 1;
+        } else {
+            carry = 0;
+        }
+        if (i != len1-1 || minus != 0) {
+            res.push_back(minus);
+        }
         ++i;
     }
     return res;
@@ -287,9 +320,77 @@ BigNumber operator-(const BigNumber &lhs, const BigNumber &rhs) {
     return res;
 }
 
+BigNumber operator*(const BigNumber &lhs, const BigNumber &rhs) {
+    BigNumber res;
+    // 判断符号
+    if (lhs.isNegative ^ rhs.isNegative) {
+        res.isNegative = true;
+    } else {
+        res.isNegative = false;
+    }
+    // 小的放在下面
+    vector<int> vec1, vec2;
+    if (lhs.pvec->size() > rhs.pvec->size()) {
+        vec1 = *lhs.pvec;
+        vec2 = *rhs.pvec;
+    } else {
+        vec1 = *rhs.pvec;
+        vec2 = *lhs.pvec;
+    }
+    vector<int> temp;
+    int multi = 0,
+        carry = 0;
+    for (int i = 0; i < vec2.size(); ++i) {
+        carry = 0;
+        for (int j = 0; j < vec1.size(); ++j) {
+            multi = vec2[i] * vec1[j] + carry;
+            // 不在vector中
+            if (i+j >= temp.size()) {
+                carry = multi/10;
+                multi %= 10;
+                temp.push_back(multi);
+            } else {
+                multi += temp[i+j];
+                carry = multi/10;
+                temp[i+j] = multi%10;
+            }
+            if (j == vec1.size()-1) {
+                temp.push_back(carry);
+            }
+            multi = 0;
+        }
+    }
+    res.pvec = make_shared<vector<int>>(temp);
+    return res;
+}
 
+BigNumber operator/(const BigNumber &lhs, const BigNumber &rhs) {
+    //cout << "division" << endl;
+ 
+    bool flag = false;
+    BigNumber temp = lhs;
+    vector<int> start = {-1};
+    vector<int> one = {1};
+    BigNumber counter(start);
+    BigNumber incr(one);
+    while (!flag) {
+        auto result = basicMinus(temp, rhs, flag);
+        temp.pvec = make_shared<vector<int>>(result);
+        //cout << temp << endl;
+        counter = counter + incr;
+        //cout << counter << endl;
+    }
+    if (lhs.isNegative ^ lhs.isNegative) {
+        counter.isNegative = true;
+    } else {
+        counter.isNegative = false;
+    }
+    return counter;
+}
 
 int main() {
+    // test constructor
+    /*
     BigNumber b1;
     cout << b1 << endl;
     BigNumber b2(LONG_MIN);
@@ -297,20 +398,21 @@ int main() {
     BigNumber b3(LONG_MAX);
     cout << b3 << endl;
     BigNumber b4("-23456");
-    cout << b4 << endl;
+    cout << b4 << endl;*/
     //BigNumber b5("-t3456");
     //cout << b5 << endl;
 
-    BigNumber b6 = b4;
+    /*BigNumber b6 = b4;
     cout << b6 << endl;
     b6 = b6;
-    cout << b6 << endl;
+    cout << b6 << endl;*/
 
     /*BigNumber b7;
     cin >> b7;
     cout << b7 << endl;*/
 
-    auto res = BigNumber(78) + BigNumber(561);
+    // test + -
+    /*auto res = BigNumber(78) + BigNumber(561);
     cout << res << endl;
     res = BigNumber(78) - BigNumber(561);
     cout << res << endl;
@@ -322,8 +424,27 @@ int main() {
     cout << res << endl;
     res = BigNumber(78) + BigNumber(-78);
     cout << res << endl;
+    res = BigNumber("786437508301884735783") - BigNumber("647386548375927");
+    cout << res << endl;
 
     cout << (BigNumber(-78) == BigNumber(-79)) << endl;
-    cout << (BigNumber(-78) == BigNumber(-78)) << endl;
+    cout << (BigNumber(-78) == BigNumber(-78)) << endl;*/
+
+    // test *
+    /*
+    auto res = BigNumber("4567") * BigNumber("896");
+    cout << res << endl;
+    res = BigNumber("357462792384901") * BigNumber("648757928");
+    cout << res << endl;*/
+
+    // test /
+    auto res = BigNumber("4567") / BigNumber("896");
+    cout << res <<  " " << 4567/896 <<  endl;
+    res = BigNumber("4567687643285798894") / BigNumber("-89589390909236");
+    cout << res << " " << 4567/-896 << endl;
+    /*res = BigNumber("896") / BigNumber("-4567");
+    cout << res << endl;
+    res = BigNumber("896") - BigNumber("4567");
+    cout << res << endl;*/
 }
 
