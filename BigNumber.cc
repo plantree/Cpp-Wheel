@@ -366,7 +366,6 @@ BigNumber operator*(const BigNumber &lhs, const BigNumber &rhs) {
 
 BigNumber operator/(const BigNumber &lhs, const BigNumber &rhs) {
     //cout << "division" << endl;
- 
     bool flag = false;
     BigNumber temp = lhs;
     vector<int> start = {-1};
